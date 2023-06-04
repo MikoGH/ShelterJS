@@ -23,24 +23,26 @@ const db = mysql.createConnection({
 app.post('/auth', (req, res) => {
     // authTokens = {};
     process.env.JWT_SECRET = "Secret";
+    const sqlT = `INSERT INTO accounts (email, password) \
+                SELECT ?,?`;
 
     const sql = `SELECT id, nameFirst, nameSecond, email, password 
                 FROM accounts
-                WHERE email = ? AND password = ?`;
+                WHERE email = ?`;
 
     const login = req.body.email;
     const password = req.body.password;
 
+    // db.query(sqlT, [login, password], (err,result)=>{});
     db.query(sql, [login, password], (err,result)=>{
         if(err) return res.json({Message: "Error"});
-        // console.log(result); 
         let user = result[0];
         if (user === undefined) {
             console.log("Пользователь не найден");
             return res.json({Message: "Error"});
         }
         else {
-            if (user["password"] === password) {
+            if (user["password"] == password) {
                 const jwtToken = jwt.sign(
                     { id: user.id, login: user.login },
                     process.env.JWT_SECRET
@@ -129,6 +131,11 @@ app.post('/admin/saddpet', (req, res) => {
         req.body.description
     ];
 
+    if (req.body.namePet === "")
+    {
+        return res.json();
+    }
+    
     db.query(sql1, values1, (err,result)=>{
             if(err) { console.log(err); return res.json({Message: "Error"});  }
         // return res.json(result);
